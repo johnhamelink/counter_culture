@@ -21,11 +21,7 @@ module CounterCulture
           after_create :_update_counts_after_create
 
           before_destroy :_update_counts_after_destroy, if: -> (model) do
-            if model.respond_to?(:paranoia_destroyed?)
-              !model.paranoia_destroyed?
-            else
-              true
-            end
+            CounterCulture::Hooks.before_destroy(model)
           end
 
           after_update :_update_counts_after_update
@@ -33,14 +29,6 @@ module CounterCulture
           if respond_to?(:before_restore)
             before_restore :_update_counts_after_create,
               if: -> (model) { model.deleted? }
-          end
-
-          if defined?(Discard::Model) && include?(Discard::Model)
-            before_discard :_update_counts_after_destroy,
-              if: ->(model) { !model.discarded? }
-
-            before_undiscard :_update_counts_after_create,
-              if: ->(model) { model.discarded? }
           end
 
           # we keep a list of all counter caches we must maintain
@@ -55,7 +43,7 @@ module CounterCulture
         @after_commit_counter_cache << Counter.new(self, relation, options)
       end
 
-      # checks all of the declared counter caches on this class for correctnes based
+      # checks all of the declared counter caches on this class for correctness based
       # on original data; if the counter cache is incorrect, sets it to the correct
       # count
       #

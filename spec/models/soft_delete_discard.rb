@@ -1,5 +1,9 @@
 class SoftDeleteDiscard < ActiveRecord::Base
-  include Discard::Model if defined?(Discard::Model)
+  if defined?(Discard::Model)
+    include Discard::Model
+    include CounterCulture::Hooks::Discard::ModelHooks
+    default_scope -> { kept }
+  end
 
   belongs_to :company
   counter_culture :company

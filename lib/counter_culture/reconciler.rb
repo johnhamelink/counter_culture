@@ -222,18 +222,8 @@ module CounterCulture
             if where
               joins_sql += " AND (#{model.send(:sanitize_sql_for_conditions, where)})"
             end
-            # respect the deleted_at column if it exists
-            if model.column_names.include?('deleted_at')
-              joins_sql += " AND #{target_table_alias}.deleted_at IS NULL"
-            end
 
-            # respect the discard column if it exists
-            if defined?(Discard::Model) &&
-               model.include?(Discard::Model) &&
-               model.column_names.include?(model.discard_column.to_s)
-
-              joins_sql += " AND #{target_table_alias}.#{model.discard_column} IS NULL"
-            end
+            joins_sql += CounterCulture::Hooks.check_if_soft_deleted(model, target_table_alias)
           end
           joins_sql
         end
